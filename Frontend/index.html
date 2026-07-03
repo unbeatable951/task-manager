@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Task Manager — Login</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #1B3A6B 0%, #2563EB 100%);
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 40px 36px;
+      width: 100%;
+      max-width: 400px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+    }
+
+    .logo {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+    .logo h1 { font-size: 26px; color: #1B3A6B; font-weight: 700; }
+    .logo p  { font-size: 13px; color: #888; margin-top: 4px; }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      border-bottom: 2px solid #e5e7eb;
+      margin-bottom: 24px;
+    }
+    .tab {
+      flex: 1;
+      text-align: center;
+      padding: 10px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      color: #888;
+      border-bottom: 3px solid transparent;
+      margin-bottom: -2px;
+      transition: all 0.2s;
+    }
+    .tab.active { color: #2563EB; border-bottom-color: #2563EB; }
+
+    /* Form */
+    label { display: block; font-size: 13px; font-weight: 600; color: #374151; margin-bottom: 6px; }
+
+    input[type="text"],
+    input[type="password"] {
+      width: 100%;
+      padding: 11px 14px;
+      border: 1.5px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 14px;
+      margin-bottom: 16px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    input:focus { border-color: #2563EB; }
+
+    button.primary {
+      width: 100%;
+      padding: 12px;
+      background: #2563EB;
+      color: #fff;
+      font-size: 15px;
+      font-weight: 600;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.2s;
+      margin-top: 4px;
+    }
+    button.primary:hover { background: #1B3A6B; }
+
+    .message {
+      margin-top: 14px;
+      text-align: center;
+      font-size: 13px;
+      padding: 8px 12px;
+      border-radius: 6px;
+      display: none;
+    }
+    .message.error   { background: #fee2e2; color: #b91c1c; display: block; }
+    .message.success { background: #dcfce7; color: #166534; display: block; }
+
+    .form-section { display: none; }
+    .form-section.active { display: block; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="logo">
+      <h1>✅ TaskManager</h1>
+      <p>Stay organised. Get things done.</p>
+    </div>
+
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab('login')">Login</div>
+      <div class="tab"        onclick="switchTab('register')">Register</div>
+    </div>
+
+    <!-- LOGIN FORM -->
+    <div id="loginSection" class="form-section active">
+      <label for="loginUser">Username</label>
+      <input type="text" id="loginUser" placeholder="Enter username" />
+
+      <label for="loginPass">Password</label>
+      <input type="password" id="loginPass" placeholder="Enter password" />
+
+      <button class="primary" onclick="handleLogin()">Login</button>
+      <div id="loginMsg" class="message"></div>
+    </div>
+
+    <!-- REGISTER FORM -->
+    <div id="registerSection" class="form-section">
+      <label for="regUser">Choose a username</label>
+      <input type="text" id="regUser" placeholder="Enter username" />
+
+      <label for="regPass">Choose a password</label>
+      <input type="password" id="regPass" placeholder="Enter password" />
+
+      <button class="primary" onclick="handleRegister()">Create Account</button>
+      <div id="registerMsg" class="message"></div>
+    </div>
+  </div>
+
+  <script>
+    const API = "http://127.0.0.1:8000";
+
+    function switchTab(tab) {
+      document.querySelectorAll('.tab').forEach((t, i) => {
+        t.classList.toggle('active', (i === 0 && tab === 'login') || (i === 1 && tab === 'register'));
+      });
+      document.getElementById('loginSection').classList.toggle('active', tab === 'login');
+      document.getElementById('registerSection').classList.toggle('active', tab === 'register');
+    }
+
+    function showMsg(id, text, type) {
+      const el = document.getElementById(id);
+      el.textContent = text;
+      el.className = `message ${type}`;
+    }
+
+    async function handleLogin() {
+      const username = document.getElementById('loginUser').value.trim();
+      const password = document.getElementById('loginPass').value;
+      if (!username || !password) return showMsg('loginMsg', 'Please fill in all fields.', 'error');
+
+      try {
+        const res = await fetch(`${API}/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+        const data = await res.json();
+        if (!res.ok) return showMsg('loginMsg', data.detail, 'error');
+
+        // Save user info and redirect to tasks page
+        localStorage.setItem('user_id',   data.user_id);
+        localStorage.setItem('username',  data.username);
+        window.location.href = 'tasks.html';
+
+      } catch {
+        showMsg('loginMsg', 'Cannot reach the server. Is the backend running?', 'error');
+      }
+    }
+
+    async function handleRegister() {
+      const username = document.getElementById('regUser').value.trim();
+      const password = document.getElementById('regPass').value;
+      if (!username || !password) return showMsg('registerMsg', 'Please fill in all fields.', 'error');
+
+      try {
+        const res = await fetch(`${API}/register`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+        const data = await res.json();
+        if (!res.ok) return showMsg('registerMsg', data.detail, 'error');
+
+        showMsg('registerMsg', 'Account created! Please login.', 'success');
+        setTimeout(() => switchTab('login'), 1500);
+
+      } catch {
+        showMsg('registerMsg', 'Cannot reach the server. Is the backend running?', 'error');
+      }
+    }
+
+    // Allow Enter key to submit
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Enter') {
+        const active = document.querySelector('.form-section.active').id;
+        active === 'loginSection' ? handleLogin() : handleRegister();
+      }
+    });
+  </script>
+</body>
+</html>

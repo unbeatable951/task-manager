@@ -107,9 +107,7 @@ SQLite database (tasks.db)
 
 ---
 
-## 👤 Author
-
-**Your Name**  
-GitHub: Diksha Singh
+## 👤 Author 
+ Diksha Singh
 
 ---
